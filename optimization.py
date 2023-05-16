@@ -3,12 +3,13 @@
 
 
 from gurobipy import *
+from numpy import max, array
 
 # READ DATA FROM EXCEL
 import openpyxl as opxl
 
 # Load parameters from Excel file
-path = "C:\\Research\\WebScraping\\Schedule-Data.xlsx"
+path = "C:\\dev\\pipe\\CourseConnect\\Schedule-Data.xlsx"
 doc = opxl.load_workbook(path)
 
 # ---- Initializations -------------
@@ -16,7 +17,6 @@ doc = opxl.load_workbook(path)
 # Set of classes C
 C = []
 
-# Cleaner:
 # Set of semesters
 # Assumed, could be updated later with UI
 S = tuple([0, 1, 2, 3, 4, 5, 6, 7])
@@ -87,45 +87,72 @@ while ws.cell(row=row+1, column=col).value:
 model = Model("Schedule")
 model.setParam(GRB.Param.OutputFlag, 0)
 
-# Variables
-sched = {c: model.addVars(S, name="x", vtype=GRB.BINARY) for c in C}
+# Variable - sched is indexed as semester x classes
+# This means that the first index will be the semester (int) and the second term will be class name (string)
+sched = {s: model.addVars(C, name="x", vtype=GRB.BINARY) for s in S}
+
+# TODO - need to fix everything since I switched the order of the indexes
+
+# Somehow trying to find the max and min semesters by hour for the objective function
+semester_hours_list = []
+for s in S:
+    semester_hours_list.append(sched[s].sum())
+
+semester_hours = array(semester_hours_list)
 
 # Constraints
 
 # Meeting credit hour requirements
-model.addConstrs(quicksum(sched[i][j]*hrs[i] for j in S) >= MIN_HOURS for i in C)
-model.addConstrs(quicksum(sched[i][j]*hrs[i] for j in S) <= MAX_HOURS for i in C)
+model.addConstrs(quicksum(sched[i][j]*hrs[i] for j in C) >= MIN_HOURS for i in S)
+model.addConstrs(quicksum(sched[i][j]*hrs[i] for j in C) <= MAX_HOURS for i in S)
 
 # Take each required class
-model.addConstrs(quicksum(sched[i][j] for j in S) == 1 for i in C)
+model.addConstrs(quicksum(sched[i][j] for j in C) == 1 for i in S)
 
 # Availability constraint
-model.addConstrs(sched[i][j] <= avai[i][j] for i in C for j in S)
+model.addConstrs(sched[i][j] <= avai[i][j] for i in S for j in C)
+
+model.update()
+
+# max_hrs = 0
+# max_sem = 0
+# for s in S:
+#     cur_hrs = 0
+#     for c in C:
+#         cur_hrs += sched[c][s]
+#         print(sched[c][s])
+#     if max_hrs < cur_hrs:
+#         max_sem = s
+#         max_hrs = cur_hrs
+# print(max_sem)
+print(sched)
+
+# ----------------------------- Blocked out code
 
 # Prerequisite constraint
 # model.addConstrs(quicksum(sched[C[k]][sp] for sp in S) >= prereq[i][k] for k in range(len(C)) for i in C for j in S)
 
 # Objective function
-model.setObjective(quicksum(quicksum(quicksum(sched[i][j]*hrs[i])/len(S) for i in C) for j in S
-                            - quicksum(sched[i][k]*hrs[i]) for i in C) for k in S)
+# model.setObjective(quicksum(quicksum(quicksum(sched[i][j]*hrs[i])/len(S) for i in C) for j in S
+#                             - quicksum(sched[i][k]*hrs[i]) for i in C) for k in S)
 
-# Tweak model
-model.modelSense = GRB.MINIMIZE
-model.update()
-model.setParam("OutputFlag", 0)
-
-# Optimize model
-model.optimize()
-
-scrape = []
-
-# Printing outputs
-if model.status == GRB.OPTIMAL:
-    print("\nOptimal value:", model.objVal)
-    print("--- Quantities---")
-    for v in model.getVars():
-        if v.x == True and v.varName[0] == "x":
-            print("%s: %g" % (v.varName, v.x))
-            scrape.append(v.varName[8:14])
-else:
-    print("No solution")
+# # Tweak model
+# model.modelSense = GRB.MINIMIZE
+# model.update()
+# model.setParam("OutputFlag", 0)
+#
+# # Optimize model
+# model.optimize()
+#
+# scrape = []
+#
+# # Printing outputs
+# if model.status == GRB.OPTIMAL:
+#     print("\nOptimal value:", model.objVal)
+#     print("--- Quantities---")
+#     for v in model.getVars():
+#         if v.x is True and v.varName[0] == "x":
+#             print("%s: %g" % (v.varName, v.x))
+#             scrape.append(v.varName[8:14])
+# else:
+#     print("No solution")
