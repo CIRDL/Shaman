@@ -1,9 +1,9 @@
 # CourseConnect (? - for now...)
-Platform that optimizes course plans for undergraduate college students and recommends professors, courses, and majors based off personality demographics.
+Platform that optimizes course plans for undergraduate college students.
 
 ## Optimization
 
-The optimzation model is essentially minimizing a single decision variable that each linear combination of classes per semester are set less than or equal to, all while 
+The optimization model is essentially minimizing a single decision variable that each linear combination of classes per semester is set less than or equal to, all while 
 satisfying a few constraints.
 
 ### Decision Variables
@@ -17,11 +17,11 @@ objective function
 
 * max_hour - constraint that makes sure each linear combination of classes taken is less than or equal to the given maximum hours per semester
 * min_hour - constraint that makes sure each linear combination of classes taken is more than or equal to the given minimum hours per semester to remain a full-time student
-* cores - constraint that ensure each core class that is necessary for graduating for you chosen to degree is taken
+* cores - constraint that ensures each core class that is necessary for graduating for your chosen degree is taken
 * avai - contraint that ensures the given class is offered at the time the model recommends you take it
 * prereq - constraint that ensures each class recommended by the model has followed the logical chain of prerequisites necessary 
 
 ### Objective Function
 
-The model is minimizing the bound decision variable while modifying the bound and sched matrix variables. In english (kind of), the objective function is trying to minimize the 
+The model is minimizing the bound decision variable while modifying the bound and sched matrix variables. In English (kind of), the objective function is trying to minimize the 
 hours for the semester with the most amount of hours while meeting the constraints.
