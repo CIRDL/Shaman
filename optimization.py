@@ -2,7 +2,6 @@
 # Optimization model for choosing class schedule
 import gurobipy
 from gurobipy import *
-from num2words import *
 
 # READ DATA FROM EXCEL
 import openpyxl as opxl
@@ -92,7 +91,7 @@ model.setParam(GRB.Param.OutputFlag, 0)
 
 # sched - first index will be the semester (int) and the second term will be class name (string)
 # 1 for taking class at class c at semester s, 0 otherwise
-sched = {s: model.addVars(C, name="x", vtype=GRB.BINARY) for s in S}
+schedule = model.addVars(S, C, vtype=GRB.BINARY, name="schedule")
 
 # bound - single integer variable that represents the highest number of hours that will be required in a semester
 # Implicitly accounts for the min and max number of hours per semester to be a full time student
@@ -102,22 +101,21 @@ bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bound"
 # Constraints
 
 # Configuring bound constraint
-model.addConstrs(quicksum(sched[s][c]*hrs[c] for c in C) <= bound for s in S)
-
-# Maintain minimum number of hours for full time student constraint
-model.addConstr(bound <= MAX_HOURS)
-
-# model.addConstrs(quicksum(sched[s][c] for c in C) >= MIN_HOURS for s in S)
+model.addConstrs(quicksum(schedule[(s, c)]*hrs[c] for c in C) <= bound for s in S)
 
 # Take each required class
-model.addConstrs(quicksum(sched[s][c] for s in S) == 1 for c in C)
+model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
 
 # Availability constraint
-model.addConstrs(sched[i][j] <= avai[j][i] for i in S for j in C)
+model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
 # Prerequisite constraint
-# model.addConstrs(quicksum(sched[k][C[p]] for k in range(s)) <= prereq[c][p] for p in range(len(C))
+# model.addConstrs(quicksum(schedule[(k, C[p])] for k in range(s)) <= prereq[c][p] for p in range(len(C))
 #                  for c in C for s in S)
+
+# # Another attempt at the prerequisite constraint...didn't work >:(
+P = list(C)
+# model.addConstrs((((quicksum(schedule[(k, p)] for k in range(s))) >= prereq[c][int(P.index(p))] for p in P) for c in C) for s in S)
 
 # Objective function
 model.setObjective(bound, sense=GRB.MINIMIZE)
@@ -131,14 +129,22 @@ hour_count = 0
 # Printing outputs
 if model.status == GRB.OPTIMAL:
     print("\nMaximum number of hours required:", model.objVal)
-    print("---Schedule---")
-    for s in S:
-        print(f"{num2words(s+1, to='ordinal').capitalize()} semester:")
-        for c in C:
-            if sched[s][c] is True:
-                hour_count += hrs[c]
-                print(f"{c}: {hrs[c]}")
-        print("Total hours: ", hour_count)
-    hour_count = 0
+    print("----Schedule---")
+    semester = 1
+    sem = semester
+    sem_hours = 0
+    print(f"\nSemester {semester}")
+    for v in model.getVars():
+        if v.x == 1:
+            course = v.VarName[11:20].split("]")[0]
+            sem = str(int(v.VarName[9]) + 1)
+            print(f"{course}: {hrs[course]}")
+            sem_hours += hrs[course]
+        if int(sem) > int(semester):
+            semester = sem
+            print(f"-----Total Hours: {sem_hours}")
+            print(f"\nSemester {semester}")
+            sem_hours = 0
+
 else:
     print("Not possible :(")
