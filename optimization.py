@@ -109,13 +109,15 @@ model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
 # Availability constraint
 model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
-# Prerequisite constraint
-# model.addConstrs(quicksum(schedule[(k, C[p])] for k in range(s)) <= prereq[c][p] for p in range(len(C))
-#                  for c in C for s in S)
+# # Prerequisite constraint
+# model.addConstrs(quicksum(schedule[(k, C[p])] for k in range(s)) <= prereq[c][p] * schedule[(s, c)]
+#                  for p in range(len(C)) for c in C for s in S)
 
 # # Another attempt at the prerequisite constraint...didn't work >:(
 P = list(C)
-# model.addConstrs((((quicksum(schedule[(k, p)] for k in range(s))) >= prereq[c][int(P.index(p))] for p in P) for c in C) for s in S)
+# model.addConstrs(quicksum(schedule[(k, p)] for k in range(s)) >= prereq[c][int(P.index(p))] * schedule[(s, c)]
+#                  for p in P for c in C for s in S)
+
 
 # Objective function
 model.setObjective(bound, sense=GRB.MINIMIZE)
@@ -145,6 +147,8 @@ if model.status == GRB.OPTIMAL:
             print(f"-----Total Hours: {sem_hours}")
             print(f"\nSemester {semester}")
             sem_hours = 0
+    # Quick fix for outputting last semester hours
+    print(f"-----Total Hours: {sem_hours}")
 
 else:
     print("Not possible :(")
