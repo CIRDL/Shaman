@@ -17,7 +17,7 @@ C = []
 
 # Set of semesters
 # Assumed, could be updated later with UI
-S = tuple([0, 1, 2, 3, 4, 5, 6, 7])
+S = (0, 1, 2, 3, 4, 5, 6, 7)
 
 # Parameters
 
@@ -58,6 +58,15 @@ while ws.cell(row=row+1, column=col).value:
     col = 1
     row += 1
 
+pre = {}
+for p in prereq.keys():
+    index = 0
+    pre.setdefault(p, [])
+    for i in prereq[p]:
+        if i == 1:
+            pre.get(p, []).append(C[index])
+        index += 1
+
 
 # Populating parameter hours h
 ws = doc["ISE"]
@@ -87,6 +96,7 @@ while ws.cell(row=row+1, column=col).value:
 model = Model("Schedule")
 model.setParam(GRB.Param.OutputFlag, 0)
 
+
 # Decision Variables
 
 # sched - first index will be the semester (int) and the second term will be class name (string)
@@ -97,6 +107,17 @@ schedule = model.addVars(S, C, vtype=GRB.BINARY, name="schedule")
 # Implicitly accounts for the min and max number of hours per semester to be a full time student
 # bounds = model.addVars(S, vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bounds")
 bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bound")
+
+bounds = {}
+expr = LinExpr()
+semester_count = 0
+index_count = 0
+for v in schedule.items():
+    if v[0][0] != index_count:
+        bounds.setdefault(index_count, expr)
+        index_count += 1
+        expr = LinExpr()
+    expr.add(schedule[(v[0][0], v[0][1])], hrs[v[0][1]])
 
 # Constraints
 
@@ -109,6 +130,14 @@ model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
 # Availability constraint
 model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
+# Prerequisite constraint
+for c in C:
+    for p in pre.get(c, []):
+        model.addConstrs(schedule[(s, p)] <= schedule[(s, c)] for s in S)
+
+# above will work, but here is what I need:
+# prereq needs to take in class (string) and return a list of prerequisite classes (strings)
+
 # # Prerequisite constraint
 # model.addConstrs(quicksum(schedule[(k, C[p])] for k in range(s)) <= prereq[c][p] * schedule[(s, c)]
 #                  for p in range(len(C)) for c in C for s in S)
@@ -120,7 +149,7 @@ P = list(C)
 
 
 # Objective function
-model.setObjective(bound, sense=GRB.MINIMIZE)
+model.setObjective(max(x for x in bounds.items()), sense=GRB.MINIMIZE)
 model.setParam("OutputFlag", 0)
 
 model.update()
