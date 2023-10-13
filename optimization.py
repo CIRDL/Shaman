@@ -108,16 +108,17 @@ schedule = model.addVars(S, C, vtype=GRB.BINARY, name="schedule")
 # bounds = model.addVars(S, vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bounds")
 bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bound")
 
-bounds = {}
-expr = LinExpr()
-semester_count = 0
-index_count = 0
-for v in schedule.items():
-    if v[0][0] != index_count:
-        bounds.setdefault(index_count, expr)
-        index_count += 1
-        expr = LinExpr()
-    expr.add(schedule[(v[0][0], v[0][1])], hrs[v[0][1]])
+# Not sure what is happening...
+# bounds = {}
+# expr = LinExpr()
+# semester_count = 0
+# index_count = 0
+# for v in schedule.items():
+#     if v[0][0] != index_count:
+#         bounds.setdefault(index_count, expr)
+#         index_count += 1
+#         expr = LinExpr()
+#     expr.add(schedule[(v[0][0], v[0][1])], hrs[v[0][1]])
 
 # Constraints
 
@@ -131,25 +132,13 @@ model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
 model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
 # Prerequisite constraint
-for c in C:
-    for p in pre.get(c, []):
-        model.addConstrs(schedule[(s, p)] <= schedule[(s, c)] for s in S)
-
-# above will work, but here is what I need:
-# prereq needs to take in class (string) and return a list of prerequisite classes (strings)
-
-# # Prerequisite constraint
-# model.addConstrs(quicksum(schedule[(k, C[p])] for k in range(s)) <= prereq[c][p] * schedule[(s, c)]
-#                  for p in range(len(C)) for c in C for s in S)
-
-# # Another attempt at the prerequisite constraint...didn't work >:(
+# Note - need to either redefine prereq j index (currently using string but it is indexed by int) or 
+# redefine access method from within constraint
 P = list(C)
-# model.addConstrs(quicksum(schedule[(k, p)] for k in range(s)) >= prereq[c][int(P.index(p))] * schedule[(s, c)]
-#                  for p in P for c in C for s in S)
-
+model.addConstrs(schedule[(s, c)] * prereq[(c, j)] <= quicksum(schedule[(s_0, j)] for s_0 in range(s)) for j in C for c in C for s in S)
 
 # Objective function
-model.setObjective(max(x for x in bounds.items()), sense=GRB.MINIMIZE)
+model.setObjective(bound, sense=GRB.MINIMIZE)
 model.setParam("OutputFlag", 0)
 
 model.update()
