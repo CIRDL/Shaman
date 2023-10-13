@@ -7,7 +7,7 @@ from gurobipy import *
 import openpyxl as opxl
 
 # Load parameters from Excel file
-path = "C:\\dev\\pipe\\CourseConnect\\Schedule-Data.xlsx"
+path = "C:\\dev\\pipe\\Shaman\\Schedule-Data.xlsx"
 doc = opxl.load_workbook(path)
 
 # ---- Initializations -------------
@@ -67,7 +67,6 @@ for p in prereq.keys():
             pre.get(p, []).append(C[index])
         index += 1
 
-
 # Populating parameter hours h
 ws = doc["ISE"]
 row = 1
@@ -94,7 +93,7 @@ while ws.cell(row=row+1, column=col).value:
 # ---------- OPTIMIZATION MODEL ----------------------
 # Model
 model = Model("Schedule")
-model.setParam(GRB.Param.OutputFlag, 0)
+
 
 
 # Decision Variables
@@ -108,18 +107,6 @@ schedule = model.addVars(S, C, vtype=GRB.BINARY, name="schedule")
 # bounds = model.addVars(S, vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bounds")
 bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bound")
 
-# Not sure what is happening...
-# bounds = {}
-# expr = LinExpr()
-# semester_count = 0
-# index_count = 0
-# for v in schedule.items():
-#     if v[0][0] != index_count:
-#         bounds.setdefault(index_count, expr)
-#         index_count += 1
-#         expr = LinExpr()
-#     expr.add(schedule[(v[0][0], v[0][1])], hrs[v[0][1]])
-
 # Constraints
 
 # Configuring bound constraint
@@ -132,10 +119,8 @@ model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
 model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
 # Prerequisite constraint
-# Note - need to either redefine prereq j index (currently using string but it is indexed by int) or 
-# redefine access method from within constraint
-P = list(C)
-model.addConstrs(schedule[(s, c)] * prereq[(c, j)] <= quicksum(schedule[(s_0, j)] for s_0 in range(s)) for j in C for c in C for s in S)
+# Note - pre[c].count(j) is 1 if class j is a prerequisite for class c
+model.addConstrs(schedule[(s, c)] * pre[c].count(j) <= quicksum(schedule[(s_0, j)] for s_0 in range(s)) for j in C for c in C for s in S)
 
 # Objective function
 model.setObjective(bound, sense=GRB.MINIMIZE)
@@ -169,4 +154,4 @@ if model.status == GRB.OPTIMAL:
     print(f"-----Total Hours: {sem_hours}")
 
 else:
-    print("Not possible :(")
+    print("Not possible :'(")
