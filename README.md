@@ -1,4 +1,4 @@
-# CourseConnect (? - for now...)
+# Shaman
 Platform that optimizes course plans for undergraduate college students.
 
 ## Optimization
