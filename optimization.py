@@ -36,7 +36,7 @@ avai = {}
 
 # ----------- Read from excel ----------------
 
-ws = doc["ISE Prereqs"]
+ws = doc["Sheet1"]
 
 # Populating classes set C
 row = 1
@@ -93,8 +93,6 @@ while ws.cell(row=row+1, column=col).value:
 # ---------- OPTIMIZATION MODEL ----------------------
 # Model
 model = Model("Schedule")
-
-
 
 # Decision Variables
 
