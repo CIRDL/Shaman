@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import re
 
 
-source = 'https://ou-public.courseleaf.com/courses/ise/'
+source = 'https://ou-public.courseleaf.com/courses/ame/'
 
 r = requests.get(source)
 soup = BeautifulSoup(r.text, 'html.parser')
@@ -16,7 +16,7 @@ prereqs = []
 
 main_body = soup.find_all(class_='courseblock')
 
-for element in main_body[0:10]:
+for element in main_body:
         
     header = element.find('strong')
     if header:
