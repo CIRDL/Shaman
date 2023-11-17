@@ -25,3 +25,11 @@ objective function
 
 The model is minimizing the bound decision variable while modifying the bound and sched matrix variables. In English (kind of), the objective function is trying to minimize the 
 hours for the semester with the most amount of hours while meeting the constraints.
+
+## ingest_data.py
+
+The idea is to ingest the data from (eventually) extract.py. That way I can abstract the backend optimization model from the front end data pipeline.
+
+## extract.py
+
+This will scrape the OU webpage for data on each major.
