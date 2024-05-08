@@ -103,12 +103,14 @@ schedule = model.addVars(S, C, vtype=GRB.BINARY, name="schedule")
 # bound - single integer variable that represents the highest number of hours that will be required in a semester
 # Implicitly accounts for the min and max number of hours per semester to be a full time student
 # bounds = model.addVars(S, vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bounds")
-bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS, ub=MAX_HOURS, name="bound")
+bound = model.addVar(vtype=GRB.INTEGER, lb=MIN_HOURS,
+                     ub=MAX_HOURS, name="bound")
 
 # Constraints
 
 # Configuring bound constraint
-model.addConstrs(quicksum(schedule[(s, c)]*hrs[c] for c in C) <= bound for s in S)
+model.addConstrs(quicksum(schedule[(s, c)]*hrs[c]
+                 for c in C) <= bound for s in S)
 
 # Take each required class
 model.addConstrs(quicksum(schedule[(s, c)] for s in S) == 1 for c in C)
@@ -118,7 +120,12 @@ model.addConstrs(schedule[(i, j)] <= avai[j][i] for i in S for j in C)
 
 # Prerequisite constraint
 # Note - pre[c].count(j) is 1 if class j is a prerequisite for class c
-model.addConstrs(schedule[(s, c)] * pre[c].count(j) <= quicksum(schedule[(s_0, j)] for s_0 in range(s)) for j in C for c in C for s in S)
+# After first semester
+model.addConstrs(schedule[(s, c)] * pre[c].count(j) <= quicksum(schedule[(s_0, j)]
+                 for s_0 in range(s)) for j in C for c in C for s in S)
+
+# First semester
+model.addConstrs(schedule[(0, c)] * len(pre[c]) == 0 for c in C)
 
 # Objective function
 model.setObjective(bound, sense=GRB.MINIMIZE)

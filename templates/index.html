@@ -29,18 +29,14 @@
     <button onclick="sendData()" id="run-algorithm">Go</button>
     <script>
       function sendData() {
-        var value = document.getElementById("semesters").value;
-        $.ajax({
-          url: "/process",
-          type: "POST",
-          contentType: "application/json",
-          data: JSON.stringify({ value: value }),
-          success: function (response) {
-            document.getElementById("output").innerHTML = response.result;
+        let resp = fetch(`${window.location.origin}/process`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          error: function (error) {
-            console.log(error);
-          },
+          body: `{"value":"50"}`,
+        }).then((v) => {
+          console.log("it worked!!!!");
         });
       }
     </script>
