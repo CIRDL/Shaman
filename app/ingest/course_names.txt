@@ -1,0 +1,15 @@
+course_initials = ['ame', 'bme', 'che', 'cees',
+                   'cs', 'dsa', 'ece', 'engr', 'ephy', 'ise']
+
+links = {
+    'ame': 'https://ou-public.courseleaf.com/gallogly-engineering/aerospace-mechanical-engineering/#coursestext',
+    'bme': 'https://ou-public.courseleaf.com/gallogly-engineering/stephenson-biomedical-engineering/#coursestext',
+    'che': 'https://ou-public.courseleaf.com/gallogly-engineering/chemical-biological-materials-engineering/#coursestext',
+    'cees': 'https://ou-public.courseleaf.com/gallogly-engineering/civil-engineering-environmental-science/',
+    'cs': 'https://ou-public.courseleaf.com/gallogly-engineering/computer-science/#coursestext',
+    'dsa': 'https://ou-public.courseleaf.com/gallogly-engineering/program-data-science-analytics/#coursestext',
+    'ece': 'https://ou-public.courseleaf.com/gallogly-engineering/electrical-computer-engineering/#coursestext',
+    'engr': 'https://ou-public.courseleaf.com/gallogly-engineering/engineering/#coursestext',
+    'ephy': 'https://ou-public.courseleaf.com/gallogly-engineering/engineering-physics/#coursestext',
+    'ise': 'https://ou-public.courseleaf.com/gallogly-engineering/industrial-systems-engineering/#coursestext'
+}

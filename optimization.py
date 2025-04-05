@@ -91,8 +91,18 @@ while ws.cell(row=row+1, column=col).value:
     row += 1
 
 # ---------- OPTIMIZATION MODEL ----------------------
+
+# Liscense for Gurobi
+options = {
+    "WLSACCESSID": "4540b5e9-11c6-443c-aa3a-2e5b2dfcbb86",
+    "WLSSECRET": "0203e490-6c19-4ed9-9cdc-b733f200e726",
+    "LICENSEID": 2544834,
+}
+
+env = Env(params=options)
+
 # Model
-model = Model("Schedule")
+model = Model("Schedule", env=env)
 
 # Decision Variables
 
@@ -139,7 +149,6 @@ hour_count = 0
 
 # Printing outputs
 if model.status == GRB.OPTIMAL:
-    print("\nMaximum number of hours required:", model.objVal)
     print("----Schedule---")
     semester = 1
     sem = semester
