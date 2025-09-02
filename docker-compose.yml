@@ -11,7 +11,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
 
-  app:
+  bronze_program_requirements:
     build:
       context: .
       dockerfile: Dockerfile
@@ -22,7 +22,22 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: db
-    command: poetry run python app/ingest/catalog/bronze_cs.py
+    command: poetry run python app/ingest/catalog/bronze_program_requirements.py
+    volumes:
+      - .:/app
+
+  bronze_degree_requirements:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+    command: poetry run python app/ingest/catalog/bronze_degree_requirements.py
     volumes:
       - .:/app
 
