@@ -10,6 +10,7 @@ print("Starting classnav ingestion...")
 
 # Program Requirements request
 
+# NOTE - may need to scrape last 4 semesters to extrapolate available courses
 url = "https://classnav.ou.edu/index_ajax.php"
 params = {
     "sEcho": 1,
@@ -44,6 +45,8 @@ data = resp.json()
 source_type = 'Classnav'
 source_url = url
 group_name = "Major Courses"
+subject_norm = "CS"
+subject_raw = "C S"
 
 # Grab courses
 payload_html = str(data) # table under aaData
@@ -75,14 +78,16 @@ cur.execute("""
     INSERT INTO bronze.snapshots (
         source_type,
         source_url,
+        subject_norm,
+        subject_raw,
         group_name,
         content_hash,
         rows_json,
         term_id,
         payload_html
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     RETURNING id;
-""", (source_type, source_url, group_name, content_hash, Json(rows_json), term_id, payload_html))
+""", (source_type, source_url, subject_norm, subject_raw, group_name, content_hash, Json(rows_json), term_id, payload_html))
 
 inserted_id = cur.fetchone()[0]
 print("Inserted row ID:", inserted_id)
