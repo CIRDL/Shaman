@@ -41,5 +41,50 @@ services:
     volumes:
       - .:/app
 
+  bronze_courses:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+    command: poetry run python app/ingest/catalog/bronze_courses.py
+    volumes:
+      - .:/app
+
+  bronze_general_courses:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+    command: poetry run python app/ingest/catalog/bronze_general_courses.py
+    volumes:
+      - .:/app
+
+  bronze_classnav:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+    command: poetry run python app/ingest/catalog/bronze_classnav.py
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data:

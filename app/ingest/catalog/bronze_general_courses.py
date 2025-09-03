@@ -5,10 +5,10 @@ import psycopg2
 import hashlib
 
 
-print("Starting courses ingestion...")
+print("Starting general education courses ingestion...")
 
-# Major specific courses link
-url = 'https://ou-public.courseleaf.com/gallogly-engineering/computer-science/#coursestext'
+# General education courses link
+url = 'https://www.ou.edu/gened/courses'
 
 # Extract text
 try:
@@ -21,20 +21,13 @@ except Exception as e:
 # Create soup object
 soup = BeautifulSoup(response.text, 'html.parser')
 
-# Grab container of courses
-container = soup.find(id='coursestextcontainer')
-
 # Construct record
-source_type = container.find('h2').get_text(strip=True)
+source_type = 'General Education'
 source_url = url
-program_code = soup.select_one('h1.page-title').get_text(strip=True) # e.g. Computer Science, B.S.
-subject_norm = "CS" # Change to dict key
-subject_raw = "C S "
-catalog_year = soup.select_one('button#sidebar-toggle span').get_text(strip=True) # 2025-2026 Edition
-group_name = "Major Courses"
+group_name = "General Courses"
 
 # Grab courses
-payload_html = soup.find("div", class_="sc_sccoursedescs")
+payload_html = soup.find("div", class_="parsys_column bootstrap-c0 span8")
 rows_json = payload_html.prettify()
 payload_html = str(payload_html)
 content_hash = hashlib.sha256(payload_html.encode('utf-8')).hexdigest()
@@ -63,17 +56,12 @@ cur.execute("""
     INSERT INTO bronze.snapshots (
         source_type,
         source_url,
-        program_code,
-        subject_norm,
-        subject_raw,
-        catalog_year,
         group_name,
         content_hash,
         payload_html
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s)
     RETURNING id;
-""", (source_type, source_url, program_code, subject_norm, subject_raw, catalog_year, 
-        group_name, content_hash, payload_html))
+""", (source_type, source_url, group_name, content_hash, payload_html))
 
 inserted_id = cur.fetchone()[0]
 print("Inserted row ID:", inserted_id)

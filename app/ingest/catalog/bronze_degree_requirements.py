@@ -7,7 +7,7 @@ import hashlib
 
 print("Starting degree requirements ingestion...")
 
-# Program Requirements link
+# Degree Requirements link
 url = 'https://ou-public.courseleaf.com/gallogly-engineering/computer-science/computer-science-bachelor-science/#degreerequirementstext'
 
 # Extract text

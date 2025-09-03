@@ -3,14 +3,32 @@ from bs4 import BeautifulSoup
 import os
 import psycopg2
 import hashlib
+from psycopg2.extras import Json
 
 
-print("Starting courses ingestion...")
+print("Starting classnav ingestion...")
 
-# Major specific courses link
-url = 'https://ou-public.courseleaf.com/gallogly-engineering/computer-science/#coursestext'
+# Program Requirements request
 
-# Extract text
+url = "https://classnav.ou.edu/index_ajax.php"
+params = {
+    "sEcho": 1,
+    "iColumns": 18,
+    "sColumns": "",
+    "iDisplayStart": 0,
+    "iDisplayLength": 400,
+    "semester": "202420",
+    "subject_code": "C S",
+    "subject": "C S",
+    "schedule": "all",
+    "delivery": "all",
+    "gened": "",
+    "term": "all",
+    "available": "true",
+    "waitlist": "true"
+}
+
+# Hit request link
 try:
     response = requests.get(url)
     response.raise_for_status()
@@ -18,26 +36,20 @@ except Exception as e:
     print(f"Error fetching URL {url}: {e}")
     raise
 
-# Create soup object
-soup = BeautifulSoup(response.text, 'html.parser')
-
-# Grab container of courses
-container = soup.find(id='coursestextcontainer')
+# Extract data
+resp = requests.get(url, params=params)
+data = resp.json()
 
 # Construct record
-source_type = container.find('h2').get_text(strip=True)
+source_type = 'Classnav'
 source_url = url
-program_code = soup.select_one('h1.page-title').get_text(strip=True) # e.g. Computer Science, B.S.
-subject_norm = "CS" # Change to dict key
-subject_raw = "C S "
-catalog_year = soup.select_one('button#sidebar-toggle span').get_text(strip=True) # 2025-2026 Edition
 group_name = "Major Courses"
 
 # Grab courses
-payload_html = soup.find("div", class_="sc_sccoursedescs")
-rows_json = payload_html.prettify()
-payload_html = str(payload_html)
+payload_html = str(data) # table under aaData
+rows_json = data
 content_hash = hashlib.sha256(payload_html.encode('utf-8')).hexdigest()
+term_id = '202420'
 
 # Connection ------
 
@@ -63,17 +75,14 @@ cur.execute("""
     INSERT INTO bronze.snapshots (
         source_type,
         source_url,
-        program_code,
-        subject_norm,
-        subject_raw,
-        catalog_year,
         group_name,
         content_hash,
+        rows_json,
+        term_id,
         payload_html
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
     RETURNING id;
-""", (source_type, source_url, program_code, subject_norm, subject_raw, catalog_year, 
-        group_name, content_hash, payload_html))
+""", (source_type, source_url, group_name, content_hash, Json(rows_json), term_id, payload_html))
 
 inserted_id = cur.fetchone()[0]
 print("Inserted row ID:", inserted_id)
