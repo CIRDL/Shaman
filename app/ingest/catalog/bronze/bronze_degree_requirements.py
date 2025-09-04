@@ -31,7 +31,9 @@ catalog_year = soup.select_one('button#sidebar-toggle span').get_text(strip=True
 
 # Grab course list table
 group_name = 'General Education'
-payload_html = str(soup.select_one('table.sc_courselist'))
+degree_container = soup.select_one('div#degreerequirementstextcontainer')
+degree_table = degree_container.select_one('table.sc_courselist')
+payload_html = str(degree_table)
 content_hash = hashlib.sha256(payload_html.encode('utf-8')).hexdigest()
 
 # Connection ------
